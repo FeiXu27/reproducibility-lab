@@ -338,7 +338,7 @@ How difficult was it to reproduce the results?
 What made it hard, and what made it easy? Think about the data files, the
 variable names, and how much the paper told you about the analysis.
 
-> I think the hard part if reproducing the data without hint is to know what the steps are to clean the data and prepare them for final analysis.
+> I think the hard part of reproducing the data without hint is to know what the steps are to clean the data and prepare them for final analysis.
 
 ## Bonus questions
 
@@ -350,8 +350,13 @@ counts. What does that suggest about how the authors' software (SPSS) and R's
 `aov()` each divide up the variance? `docs/anova-in-r.md` explains it, but try
 first.
 
-```{r}
+> F for direction changed from .66 to .38, but F for station changed from 23.35 to 23.45.
 
+```{r}
+mod_refit <- aov(DISTANCE ~  STN_NAME * DIRECTION, data = d)
+
+summary(mod_refit)
+summary(mod)
 ```
 
 **2. Orientation or direction?** The paper describes the factor as
@@ -361,7 +366,18 @@ their ANOVA? Make an `orientation` column with `if_else()` and refit the model
 with it to check.
 
 ```{r}
+d <- d %>%
+  mutate(
+    ORIENTATION = if_else(
+      (DIRECTION == "EAST" & STN_NAME %in% c("B-Y", "SHER")) |
+      (DIRECTION == "WEST" & STN_NAME %in% c("SPAD", "STG")),
+      "TOWARD",
+      "AWAY FROM"
+    )
+  )
 
+mod_orientation <- aov(DISTANCE ~ ORIENTATION * STN_NAME, data = d)
+summary(mod_orientation)
 ```
 
 **3. Reproduce Figure 1.** Plot the mean distance rating for each station,
@@ -370,7 +386,9 @@ split by direction, with error bars of ±1 standard error, as in the paper.
 for you.
 
 ```{r}
-
+clean_distance <- d %>%
+  group_by(DIRECTION, STN_NAME) %>%
+  summarise(mean_distance = mean(DISTANCE))
 ```
 
 ## Going further
